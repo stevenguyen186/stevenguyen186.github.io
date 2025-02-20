@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebView jsChannel</title>
+  <script src="https://raw.githubusercontent.com/stevenguyen186/jschannel-reactnativewebview/refs/heads/main/jschannel.js"></script>
+  <!-- <script src="jschannel.js"></script> -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+    }
+    #messageDisplay {
+      width: 100%;
+      max-width: 90%;
+      height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #ccc;
+      padding: 10px;
+      background-color: #f8f8f8;
+      text-align: left;
+    }
+    #sendMessage {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const messageDisplay = document.getElementById("messageDisplay");
+      const sendButton = document.getElementById("sendMessage");
+
+      // Build the jsChannel for react-native-webview.
+      // We set useRNWebView to true and use an empty scope so that method names remain unprefixed.
+      var channel = Channel.build({
+        useRNWebView: true,
+        origin: "react-native-webview", // Default origin for RN WebView
+        scope: "", // Use empty scope to avoid prefixing method names
+        debugOutput: true,
+        onReady: function(ch) {
+          console.log("Channel is ready");
+        }
+      });
+
+      // Helper to display messages on the page.
+      function displayMessage(content) {
+        messageDisplay.textContent = "📩 Received:\n" + JSON.stringify(content, null, 2);
+        alert("📥 Received Message:\n" + JSON.stringify(content, null, 2));
+      }
+
+      // Bind a method that will be invoked when React Native calls "sendMessage"
+      channel.bind("sendMessage", function (trans, params) {
+        alert("📩 Received via jsChannel:\n" + JSON.stringify(params, null, 2));
+        displayMessage(params);
+        // Return a response back to React Native.
+        return { status: "✅ Message received in WebView via jsChannel" };
+      });
+
+      // When the button is clicked, send a message to React Native via jsChannel.
+      sendButton.addEventListener("click", function () {
+        var message = {
+          method: "sendMessage",
+          params: { message: "👋 Hello from WebView using jsChannel" },
+          // Success and error callbacks handle the response.
+          success: function(response) {
+            alert("Response from React Native:\n" + JSON.stringify(response, null, 2));
+          },
+          error: function(error, msg) {
+            alert("Error response:\n" + error + ": " + msg);
+          }
+        };
+
+        alert("📤 Sending to React Native via jsChannel:\n" + JSON.stringify(message, null, 2));
+        channel.call(message);
+      });
+    });
+  </script>
+</head>
+<body>
+  <h2>Received Message:</h2>
+  <pre id="messageDisplay">Waiting for message...</pre>
+  <button id="sendMessage">Send Message to React Native</button>
+</body>
+</html>
